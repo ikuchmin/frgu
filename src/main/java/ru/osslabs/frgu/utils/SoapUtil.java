@@ -1,8 +1,7 @@
-package osslabs.frgu;
+package ru.osslabs.frgu.utils;
 
 import com.sun.org.apache.xml.internal.serialize.OutputFormat;
 import com.sun.org.apache.xml.internal.serialize.XMLSerializer;
-//import com.sun.xml.internal.messaging.saaj.client.p2p.HttpSOAPConnectionFactory;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -11,7 +10,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.soap.SOAPConnection;
 import javax.xml.soap.SOAPConnectionFactory;
-import javax.xml.soap.SOAPConstants;
 import javax.xml.soap.SOAPMessage;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
@@ -22,6 +20,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
+
+//import com.sun.xml.internal.messaging.saaj.client.p2p.HttpSOAPConnectionFactory;
 
 /**
  * Created by ������ on 09.06.2015.

@@ -1,4 +1,4 @@
-package osslabs.frgu;
+package ru.osslabs.frgu.providers;
 
 import javax.xml.soap.*;
 import java.text.SimpleDateFormat;
@@ -25,7 +25,15 @@ public class SoapBuilder {
         this.recipientName = recipientName;
     }
 
-    public SOAPMessage buildSoap(String action) throws SOAPException {
+    public SOAPElement buildSoap(String action) throws SOAPException {
+        return buildSoap(action, "", "");
+    }
+
+    public SOAPElement buildSoap(String action, String id) throws SOAPException{
+        return buildSoap(action, id, "");
+    }
+
+    public SOAPElement buildSoap(String action, String fromSSN, String toSSN) throws SOAPException {
 
         Date currentDate = new Date();
         SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy");
@@ -42,6 +50,9 @@ public class SoapBuilder {
         SOAPBody soapBody = envelope.getBody();
 
         SOAPElement rev_Request = soapBody.addChildElement("Request", "rev");
+        rev_Request.addNamespaceDeclaration("rev", rev_uri);
+        rev_Request.addNamespaceDeclaration("rev1", rev1_uri);
+        rev_Request.addNamespaceDeclaration("inc", inc_uri);
         SOAPElement rev_Message = rev_Request.addChildElement("Message", "rev");
 
         // БЛОК <Sender>
@@ -68,20 +79,44 @@ public class SoapBuilder {
         rev_Status.addTextNode("REQUEST");
         SOAPElement rev_Date = rev_Message.addChildElement("Date", "rev");
         rev_Date.addTextNode(format.format(currentDate));
+        SOAPElement Exec_type = rev_Message.addChildElement("ExchangeType", "rev");
+        Exec_type.addTextNode("0");
 
 
         SOAPElement rev_MessageData = rev_Request.addChildElement("MessageData", "rev");
         SOAPElement rev_AppData = rev_MessageData.addChildElement("AppData", "rev");
 
-        if (action.equals("getCurrentSSN")){
-            SOAPElement rev1_getChanges = rev_AppData.addChildElement("getChanges", "rev1");
-            SOAPElement rev1_SSNInterval = rev1_getChanges.addChildElement("SSNInterval", "rev1");
-            SOAPElement ssnFrom = rev1_SSNInterval.addChildElement("ssnFrom", "rev1");
-            SOAPElement ssnTo = rev1_SSNInterval.addChildElement("ssnTo", "rev1");
+        switch (action) {
+            case "getCurrentSSN":
+            case "getRevokationList": {
+                SOAPElement rev1_Action = rev_AppData.addChildElement(action, "rev1");
+                SOAPElement rev1_SSNInterval = rev1_Action.addChildElement("SSNInterval", "rev1");
+                SOAPElement ssnFrom = rev1_SSNInterval.addChildElement("ssnFrom", "rev1");
+                if (!fromSSN.isEmpty()) {
+                    ssnFrom.addTextNode(String.valueOf(fromSSN));
+                }
+                SOAPElement ssnTo = rev1_SSNInterval.addChildElement("ssnTo", "rev1");
+                if (!toSSN.isEmpty()) {
+                    ssnTo.addTextNode(String.valueOf(toSSN));
+                }
+                break;
+            }
+            case "getPsPassport": {
+                SOAPElement rev1_Action = rev_AppData.addChildElement(action, "rev1");
+                SOAPElement rev1_SSNInterval = rev1_Action.addChildElement("psPassportId", "rev1");
+                rev1_SSNInterval.addTextNode(String.valueOf(fromSSN));
+                break;
+            }
+            case "getRStateStructure": {
+                SOAPElement rev1_Action = rev_AppData.addChildElement(action, "rev1");
+                SOAPElement rev1_SSNInterval = rev1_Action.addChildElement("rStateStructureId", "rev1");
+                rev1_SSNInterval.addTextNode(String.valueOf(fromSSN));
+                break;
+            }
         }
 
         soapMessage.saveChanges();
 
-        return soapMessage;
+        return rev_Request;
     }
 }
