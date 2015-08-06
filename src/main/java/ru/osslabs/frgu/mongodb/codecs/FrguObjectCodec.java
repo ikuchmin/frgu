@@ -26,8 +26,8 @@ public class FrguObjectCodec implements Codec<FrguObject> {
                 .withSsn(reader.readInt64("ssn"))
                 .withData(reader.readString("data"))
                 .withObjectType(Enum.valueOf(ObjectType.class, reader.readString("object_type")))
-                .withChangeDate(reader.readDateTime("change_date"))
-                .withTimestamp(reader.readDateTime("timestamp")).build();
+                .withChangeDate(reader.readInt64("change_date"))
+                .withTimestamp(reader.readInt64("timestamp")).build();
 
         reader.readEndDocument();
         return frguObject;
@@ -43,8 +43,8 @@ public class FrguObjectCodec implements Codec<FrguObject> {
         writer.writeInt64("ssn", value.getSsn());
         writer.writeString("data", value.getData());
         writer.writeString("object_type", value.getObjectType().name());
-        writer.writeDateTime("change_date", value.getChangeDate());
-        writer.writeDateTime("timestamp", value.getTimestamp());
+        writer.writeInt64("change_date", value.getChangeDate());
+        writer.writeInt64("timestamp", value.getTimestamp());
         writer.writeEndDocument();
     }
 
