@@ -1,6 +1,6 @@
 package ru.osslabs.frgu.providers;
 
-import com.sun.xml.internal.messaging.saaj.soap.ver1_1.SOAPMessageFactory1_1Impl;
+import com.sun.xml.messaging.saaj.soap.ver1_1.SOAPMessageFactory1_1Impl;
 import org.springframework.util.StringUtils;
 import org.springframework.ws.InvalidXmlException;
 import org.springframework.ws.soap.SoapMessageCreationException;
