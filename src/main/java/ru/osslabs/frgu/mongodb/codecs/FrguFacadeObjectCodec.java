@@ -26,7 +26,6 @@ public class FrguFacadeObjectCodec implements Codec<FrguFacadeObject> {
             String id = reader.readObjectId("_id").toString();
             String frguId = reader.readString("frgu_id");
                 reader.readStartDocument();
-            //TODO check if _id is present
                 FrguObject frguObject = new FrguObjectBuilder()
                         .withId(reader.readObjectId("_id").toString())
                         .withFrguId(reader.readString("frgu_id"))
@@ -35,8 +34,8 @@ public class FrguFacadeObjectCodec implements Codec<FrguFacadeObject> {
                         .withSsn(reader.readInt64("ssn"))
                         .withData(reader.readString("data"))
                         .withObjectType(Enum.valueOf(ObjectType.class, reader.readString("object_type")))
-                        .withChangeDate(reader.readDateTime("change_date"))
-                        .withTimestamp(reader.readDateTime("timestamp")).build();
+                        .withChangeDate(reader.readInt64("change_date"))
+                        .withTimestamp(reader.readInt64("timestamp")).build();
                 reader.readEndDocument();
             ArrayList<String> refs = new ArrayList<>();
             reader.readStartArray();
@@ -69,8 +68,8 @@ public class FrguFacadeObjectCodec implements Codec<FrguFacadeObject> {
                     writer.writeInt64("ssn", value.getCurrent().getSsn());
                     writer.writeString("data", value.getCurrent().getData());
                     writer.writeString("object_type", value.getCurrent().getObjectType().name());
-                    writer.writeDateTime("change_date", value.getCurrent().getChangeDate());
-                    writer.writeDateTime("timestamp", value.getCurrent().getTimestamp());
+                    writer.writeInt64("change_date", value.getCurrent().getChangeDate());
+                    writer.writeInt64("timestamp", value.getCurrent().getTimestamp());
                 writer.writeEndDocument();
                 writer.writeStartArray("refs");
                     value.getRefs().forEach(writer::writeString);
