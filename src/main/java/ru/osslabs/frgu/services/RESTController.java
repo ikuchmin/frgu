@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import ru.osslabs.frgu.dao.PersistenceException;
+import ru.osslabs.frgu.domain.FrguFacadeObject;
 import ru.osslabs.frgu.domain.FrguObject;
 import ru.osslabs.frgu.mongodb.MongoDBClientFactory;
 import ru.osslabs.frgu.mongodb.MongoDBFrguFacadeObjectDao;
@@ -12,6 +13,7 @@ import ru.osslabs.frgu.mongodb.MongoDBFrguObjectDao;
 import javax.xml.soap.SOAPException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,20 +52,28 @@ public class RESTController {
     @ResponseBody
     public FrguObject updateObject(
             @PathVariable("frguId") String frguId,
-            @RequestParam(value = "type", defaultValue = "") String objectType) {
+            @RequestParam(value = "type", defaultValue = "") String objectType)
+            throws PersistenceException {
         FrguObject object = null;
+        MongoDBFrguFacadeObjectDao facade = new MongoDBFrguFacadeObjectDao(mongoFactory);
+        //Тип не указан. Пытаемся найти объект в фасаде.
+        //Если нашли, то получаем тип. Не нашли - бросаем ексепшн
+        if (objectType.equals("")) {
+            FrguFacadeObject obj = facade.read(frguId);
+            if (obj != null) {
+                objectType = obj.getCurrent().getObjectType().name();
+            }
+            else {
+                throw new PersistenceException("Object type is needed.");
+            }
+        }
         try {
             object = frguService.getObjectData(Long.parseLong(frguId), objectType);
         } catch (SOAPException e) {
             e.printStackTrace();
         }
-        try {
-            new MongoDBFrguObjectDao(mongoFactory).create(object);
-            new MongoDBFrguFacadeObjectDao(mongoFactory).rebuild(frguId, object);
-        } catch (PersistenceException e) {
-            e.printStackTrace();
-            //TODO throw 503
-        }
+        new MongoDBFrguObjectDao(mongoFactory).create(object);
+        new MongoDBFrguFacadeObjectDao(mongoFactory).rebuild(frguId, object);
         return object;
     }
 
@@ -88,16 +98,57 @@ public class RESTController {
     }
 
     /**
-     * /.../objects?from={timestamp}
      *
-     * @param timestamp
      * @return
      */
     @RequestMapping(value = "objects", method = RequestMethod.GET)
     @ResponseBody
-    public List<FrguObject> getAll(
-            @RequestParam(value = "from", defaultValue = "0") Long timestamp) {
+    public List<String> getObjects(){
+        return new MongoDBFrguObjectDao(mongoFactory).getIds();
+    }
+
+    /**
+     *
+     * @param timestamp
+     * @param showData
+     * @return
+     */
+    @RequestMapping(value = "changes", method = RequestMethod.GET)
+    @ResponseBody
+    public List getChanges(
+            @RequestParam(value = "from", defaultValue = "0") Long timestamp,
+            @RequestParam(value = "showData", defaultValue = "false") boolean showData) {
+        if (!showData) {
+            return getChangesWithoutData(timestamp);
+        } else {
+            return getChangesWithData(timestamp);
+        }
+    }
+
+    private List<String> getChangesWithoutData(Long timestamp){
+        return new MongoDBFrguObjectDao(mongoFactory).changesIds(timestamp);
+    }
+
+    private List<FrguObject> getChangesWithData(Long timestamp){
         return new MongoDBFrguObjectDao(mongoFactory).changes(timestamp);
+    }
+
+    /**
+     * Returns object history
+     * @param frgu_id id of object
+     * @return ArrayList
+     * @throws PersistenceException
+     */
+    @RequestMapping(value= "/{frgu_id}/history", method = RequestMethod.GET)
+    @ResponseBody
+    public List<String> getHistory(@PathVariable String frgu_id) throws PersistenceException {
+        return new MongoDBFrguFacadeObjectDao(mongoFactory).read(frgu_id).getRefs();
+    }
+
+    @RequestMapping(value = "/{id}/version", method = RequestMethod.GET)
+    @ResponseBody
+    public FrguObject getVersion(@PathVariable String id) throws PersistenceException {
+        return new MongoDBFrguObjectDao(mongoFactory).read(id);
     }
 
     @RequestMapping(value = "services", method=RequestMethod.GET)
